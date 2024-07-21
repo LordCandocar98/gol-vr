@@ -1,0 +1,58 @@
+version: "3.8"
+services:
+  app:
+    build:
+      args:
+        user: server
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: golfvr
+    container_name: golfvr-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    ports:
+      - 6002:6001
+    volumes:
+      - ./:/var/www
+    networks:
+      - golfvr
+    user: root
+
+  nginx:
+    image: nginx:alpine
+    container_name: golfvr-nginx
+    restart: unless-stopped
+    ports:
+      - 82:80
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - golfvr
+
+  postgres:
+    image: postgres:14.2
+    restart: always
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: pgsql
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - golfvr
+
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+networks:
+  golfvr:
+    driver: bridge
